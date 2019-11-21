@@ -8,6 +8,9 @@ if (($user = isLogin()) == false)
     die;
 }
 
+$redis = connRedis();
+$latestFiftyUserid = $redis->sort('latestfiftyuserid',['sore'=>'desc','get'=>'user:userid:*:username']);
+
 ?>
     <div id="navbar">
         <a href="index.php">主页</a>
@@ -17,7 +20,10 @@ if (($user = isLogin()) == false)
     </div>
     <h2>热点</h2>
     <i>最新注册用户(redis中的sort用法)</i><br>
-    <div><a class="username" href="profile.php?u=test">test</a></div>
+    <?php foreach ($latestFiftyUserid as $v) { ?>
+    <div><a class="username" href="profile.php?u=<?php echo $v;?>"><?php echo $v;?></a></div>
+    <?php } ?>
+
 
     <br><i>最新的50条微博!</i><br>
     <div class="post">
