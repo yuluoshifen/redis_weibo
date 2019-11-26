@@ -70,3 +70,32 @@ function randString()
 
     return substr(str_shuffle($str), 0, 16);
 }
+
+/**
+ * 格式化时间
+ * @param $time
+ * @return string
+ */
+function formatTime($time)
+{
+    $diff = time() - $time;
+
+    if ($diff <= 60)
+    {
+        $str = floor($diff) . ' 秒';
+    }
+    elseif ($diff <= 3600)
+    {
+        $str = floor($diff / 60) . ' 分钟';
+    }
+    elseif ($diff <= 86400)
+    {
+        $str = floor($diff / 3600) . ' 小时';
+    }
+    else
+    {
+        $str = floor($diff / 86400) . ' 天';
+    }
+
+    return $str;
+}

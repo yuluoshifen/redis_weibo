@@ -16,6 +16,13 @@ $redis = connRedis();
 $myFollowerCount  = $redis->sCard('follower:' . $user['userid']);   //粉丝个数
 $myFollowingCount = $redis->sCard('following:' . $user['userid']);  //关注人个数
 
+/*
+ * 取出粉主和自己的最新发布的50条微博
+ **/
+$redis->lTrim('receivepost:' . $user['userid'],0,49);
+$pushPostId = $redis->sort('receivepost:' . $user['userid'], ['sort' => 'desc']);
+//print_r($pushPostId);
+
 ?>
 <div id="navbar">
     <a href="index.php">主页</a>
@@ -41,8 +48,15 @@ $myFollowingCount = $redis->sCard('following:' . $user['userid']);  //关注人�
         <?php echo $myFollowingCount;?> 关注<br>
     </div>
 </div>
+<?php foreach ($pushPostId as $post_id) {
+    $post = $redis->hMGet('post:postid:' . $post_id, ['time', 'userid', 'username', 'content']);
+?>
+
 <div class="post">
-    <a class="username" href="profile.php?u=test">test</a> hello<br>
-    <i>11 分钟前 通过 web发布</i>
+    <a class="username" href="profile.php?u=<?php echo $post['username'];?>"><?php echo $post['username'];?></a> <?php echo $post['content'];?><br>
+    <i><?php echo formatTime($post['time']);?>前 通过 web发布</i>
 </div>
+
+<?php } ?>
+
 <?php include 'footer.php'; ?>
