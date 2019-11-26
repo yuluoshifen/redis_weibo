@@ -14,15 +14,15 @@ if (($user = isLogin()) == false)
  * 关注记录： set
  *
  * follower 关注 following
- * follower:followingid (followerid)
- * following:followerid (followingid)
+ * follower:followingid (followerid)    粉丝表
+ * following:followerid (followingid)   关注人表
  * */
 
 /*
  * 1：判断uid和f是否合法
  * 2：判断uid是不是当前登录用户
  **/
-$to_uid = $_GET['uid'];
+$to_uid      = $_GET['uid'];
 $isFollowing = $_GET['f'];
 if (!$to_uid)
 {
@@ -36,17 +36,17 @@ if ($to_uid == $user['userid'])
 
 $redis = connRedis();
 
-if($isFollowing == 1)
+if ($isFollowing == 1)
 {
-    $redis->sAdd('following:'.$user['userid'],$to_uid);
-    $redis->sAdd('follower:'.$to_uid,$user['userid']);
+    $redis->sAdd('following:' . $user['userid'], $to_uid);
+    $redis->sAdd('follower:' . $to_uid, $user['userid']);
 }
 else
 {
-    $redis->sRem('following:'.$user['userid'],$to_uid);
-    $redis->sRem('follower:'.$to_uid,$user['userid']);
+    $redis->sRem('following:' . $user['userid'], $to_uid);
+    $redis->sRem('follower:' . $to_uid, $user['userid']);
 }
 
-$to_username = $redis->get('user:userid:'.$to_uid.':username');
+$to_username = $redis->get('user:userid:' . $to_uid . ':username');
 header('location:profile.php?u=' . $to_username);
 include "footer.php";

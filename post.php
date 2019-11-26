@@ -20,6 +20,19 @@ $redis->set('post:postid:' . $postid . ':time', time());
 $redis->set('post:postid:' . $postid . ':content', $content);
 $redis->set('post:postid:' . $postid . ':userid', $user['userid']);
 
+/*
+ * 把微博推给自己的粉丝
+ * 1. 获取自己的所有粉丝
+ * 2. 给所有粉丝和自己推送发布的内容(链表)
+ **/
+$followers   = $redis->sMembers('follower:' . $user['userid']);
+$followers[] = $user['userid'];
+foreach ($followers as $follower_id)
+{
+    $redis->lPush('receivepost:' . $follower_id, $postid);
+}
+
+
 header('location:home.php');
 
 include 'footer.php';

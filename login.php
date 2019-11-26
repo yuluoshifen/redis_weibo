@@ -28,8 +28,11 @@ if ($redis->get('user:userid:' . $userid . ':password') != $password)
     error('密码错误，请重新输入！');
 }
 
+$secret = randString();
+$redis->set('user:userid:' . $userid . ':authsecret', $secret);
 setcookie('username', $username);
 setcookie('userid', $userid);
+setcookie('authsecret', $secret);
 
 header('location:home.php');
 

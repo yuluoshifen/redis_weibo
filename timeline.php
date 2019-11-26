@@ -2,6 +2,18 @@
 include 'header.php';
 include 'lib.php';
 
+//$redis = connRedis();
+//print_r($_COOKIE['authsecret']);
+//print_r($redis->get('user:userid:' . $_COOKIE['userid'] . ':authsecret'));
+////var_dump($_COOKIE['authsecret'] != $redis->get('user:userid:' . $_COOKIE['userid'] . ':authsecret'));
+//
+//if ($_COOKIE['authsecret'] == $redis->get('user:userid:' . $_COOKIE['userid'] . ':authsecret'))
+//{
+//    echo "pre";
+//    var_dump(1);
+//}
+//die;
+
 if (($user = isLogin()) == false)
 {
     header('location:index.php');

@@ -8,6 +8,14 @@ if (($user = isLogin()) == false)
     exit;
 }
 
+$redis = connRedis();
+
+/*
+ * 计算粉丝数和关注数
+ **/
+$myFollowerCount  = $redis->sCard('follower:' . $user['userid']);   //粉丝个数
+$myFollowingCount = $redis->sCard('following:' . $user['userid']);  //关注人个数
+
 ?>
 <div id="navbar">
     <a href="index.php">主页</a>
@@ -29,8 +37,8 @@ if (($user = isLogin()) == false)
         </table>
     </form>
     <div id="homeinfobox">
-        0 粉丝<br>
-        0 关注<br>
+        <?php echo $myFollowerCount;?> 粉丝<br>
+        <?php echo $myFollowingCount;?> 关注<br>
     </div>
 </div>
 <div class="post">
