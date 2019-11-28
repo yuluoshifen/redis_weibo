@@ -32,28 +32,37 @@ $myFollowingCount = $redis->sCard('following:' . $user['userid']);  //关注人�
  * 4.更新上次拉取点
  * 5.将最近发布微博的数组循环写到receivepost链表中
  **/
-$following = $redis->sMembers( 'following:' . $user['userid']);
+//1.获取登录用户的粉主，和自己组成一个数组
+$following   = $redis->sMembers('following:' . $user['userid']);
 $following[] = $user['userid'];
 
+//2.存储一个上次拉取点（postid），再次拉取微博时，从拉取点之后的微博开始拉取
 $lastPull = $redis->get('lastpull:userid:' . $user['userid']);
 if (!$lastPull)
 {
     $lastPull = 0;
 }
 
+//3.循环粉主数组，获取粉主和自己发布的最近的微博
 $latestPost = [];
 foreach ($following as $f)
 {
-    $latestPost = array_merge($latestPost, $redis->zRangeByScore('followingpost:userid:' . $f, $lastPull,1<<32 - 1));
+    $latestPost = array_merge($latestPost, $redis->zRangeByScore('followingpost:userid:' . $f, $lastPull + 1, 99999999));
 }
 sort($latestPost, SORT_NUMERIC);
 
-$redis->set('lastpull:userid' . $user['userid'], end($latestPost));
+//4.更新上次拉取点
+if (!empty($latestPost))
+{
+    $redis->set('lastpull:userid:' . $user['userid'], end($latestPost));
+}
 
+//5.将最近发布微博的数组循环写到receivepost链表中
 foreach ($latestPost as $p)
 {
     $redis->lPush('receivepost:' . $user['userid'], $p);
 }
+$redis->lTrim('receivepost:' . $user['userid'], 0, 999);
 $pushPostId = $redis->sort('receivepost:' . $user['userid'], ['sort' => 'desc']);
 
 ?>
@@ -77,18 +86,21 @@ $pushPostId = $redis->sort('receivepost:' . $user['userid'], ['sort' => 'desc'])
         </table>
     </form>
     <div id="homeinfobox">
-        <?php echo $myFollowerCount;?> 粉丝<br>
-        <?php echo $myFollowingCount;?> 关注<br>
+        <?php echo $myFollowerCount; ?> 粉丝<br>
+        <?php echo $myFollowingCount; ?> 关注<br>
     </div>
 </div>
-<?php foreach ($pushPostId as $post_id) {
+<?php foreach ($pushPostId as $post_id)
+{
     $post = $redis->hMGet('post:postid:' . $post_id, ['time', 'userid', 'username', 'content']);
-?>
+    ?>
 
-<div class="post">
-    <a class="username" href="profile.php?u=<?php echo $post['username'];?>"><?php echo $post['username'];?></a> <?php echo $post['content'];?><br>
-    <i><?php echo formatTime($post['time']);?>前 通过 web发布</i>
-</div>
+    <div class="post">
+        <a class="username"
+           href="profile.php?u=<?php echo $post['username']; ?>"><?php echo $post['username']; ?></a> <?php echo $post['content']; ?>
+        <br>
+        <i><?php echo formatTime($post['time']); ?>前 通过 web发布</i>
+    </div>
 
 <?php } ?>
 

@@ -24,9 +24,9 @@ $postid = $redis->incr('global:postid');
  * 微博表以哈希形式存储
  **/
 $post = [
-    'time' => time(),
-    'content' => $content,
-    'userid' => $user['userid'],
+    'time'     => time(),
+    'content'  => $content,
+    'userid'   => $user['userid'],
     'username' => $user['username']
 ];
 $redis->hMSet('post:postid:' . $postid, $post);
@@ -41,7 +41,20 @@ $redis->zAdd('followingpost:userid:' . $user['userid'], $postid, $postid);
 //  当记录粉主发布条数超过20条时，去掉最旧的微博
 if ($redis->zCard('followingpost:userid:' . $user['userid']) > 20)
 {
-    $redis->zRemRangeByRank('followingpost:userid:' . $user['userid'],0,0);
+    $redis->zRemRangeByRank('followingpost:userid:' . $user['userid'], 0, 0);
+}
+
+/*
+ * 微博冷数据写入：
+ * 1.为每一个人建一个链表，维护自己发布的微博，写入1000条数据
+ * 2.建一个全局链表，用来接收每个人发布的超过1000条微博后最早的数据
+ * 3.全局链表1000条数据后自动写入mysql
+ * 实现redis存储热数据（相对较新的微博），mysql储存冷数据（相对较旧的微博）
+ **/
+$redis->lPush('mypost:userid:' . $user['userid'], $postid);
+if ($redis->lLen('mypost:userid:' . $user['userid']) > 10)
+{
+    $redis->rpoplpush('mypost:userid:' . $user['userid'], 'global:storage');
 }
 
 /*
